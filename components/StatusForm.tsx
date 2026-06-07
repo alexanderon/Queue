@@ -6,10 +6,11 @@ import { TextField, PrimaryButton, Stack, Text, MessageBar, MessageBarType } fro
 interface StatusFormProps {
   onSubmit: (data: any) => void;
   loading: boolean;
+  initialBookingId?: string;
 }
 
-export default function StatusForm({ onSubmit, loading }: StatusFormProps) {
-  const [bookingId, setBookingId] = useState('');
+export default function StatusForm({ onSubmit, loading, initialBookingId }: StatusFormProps) {
+  const [bookingId, setBookingId] = useState(initialBookingId || '');
 
   const handleSubmit = () => {
     if (bookingId.trim()) {
