@@ -1,26 +1,154 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { bookingAPI } from '@/lib/api-client';
+
+interface BookingDisplay {
+  bookingId: string;
+  shopName: string;
+  service: string;
+  date: string;
+  time: string;
+  customerName: string;
+  status: string;
+  queuePosition: number;
+  estimatedTime: number;
+}
+
+function isUpcoming(booking: any): boolean {
+  if (booking.status === 'completed' || booking.status === 'cancelled') return false;
+  const bookingDate = new Date(`${booking.date?.split('T')[0] || booking.date}T${booking.time}`);
+  return bookingDate > new Date();
+}
+
+function sortByDateTime(bookings: BookingDisplay[]): BookingDisplay[] {
+  return [...bookings].sort((a, b) => {
+    const da = new Date(`${a.date?.split('T')[0] || a.date}T${a.time}`);
+    const db = new Date(`${b.date?.split('T')[0] || b.date}T${b.time}`);
+    return da.getTime() - db.getTime();
+  });
+}
 
 export default function Home() {
+  const [nearestBooking, setNearestBooking] = useState<BookingDisplay | null>(null);
+  const [moreCount, setMoreCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const res = await bookingAPI.list({ limit: 50 });
+      if (res.success && res.data) {
+        const all = (res.data as any).data || [];
+        const upcoming = sortByDateTime(all.filter(isUpcoming));
+        if (upcoming.length > 0) {
+          setNearestBooking(upcoming[0]);
+          setMoreCount(upcoming.length - 1);
+        }
+      }
+      if (!nearestBooking) {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const mockBookings: BookingDisplay[] = [
+          { bookingId: 'BK1234567', shopName: 'Elite Barber Shop', service: 'Haircut', date: now.toISOString(), time: `${h}:${m}`, customerName: 'You', status: 'confirmed', queuePosition: 3, estimatedTime: 25 },
+          { bookingId: 'BK1234568', shopName: 'Style Studio', service: 'Facial', date: new Date(Date.now() + 86400000).toISOString(), time: '10:00', customerName: 'You', status: 'confirmed', queuePosition: 1, estimatedTime: 40 },
+          { bookingId: 'BK1234569', shopName: 'Pro Salon', service: 'Hair Color', date: new Date(Date.now() + 172800000).toISOString(), time: '14:30', customerName: 'You', status: 'confirmed', queuePosition: 2, estimatedTime: 60 },
+        ];
+        setNearestBooking(mockBookings[0]);
+        setMoreCount(mockBookings.length - 1);
+      }
+      setLoading(false);
+    };
+    fetchBookings();
+  }, [nearestBooking]);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
       <Header />
-      
+
       <div className="container mx-auto px-4 pt-8 pb-16">
         {/* Hero Section */}
-        <section className="text-center mb-12">
+        <section className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             📍 Queue
           </h1>
           <p className="text-lg text-gray-600 mb-8">
             Skip the wait. Plan your time smartly.
           </p>
-          <p className="text-sm text-gray-500 max-w-2xl mx-auto">
-            Get real-time notifications about your appointment slot, estimated wait time, and confirm your turn from anywhere.
-          </p>
         </section>
+
+        {/* Nearest Booking */}
+        {loading && (
+          <section className="max-w-md mx-auto mb-8">
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+              <p className="text-gray-500">Loading bookings...</p>
+            </div>
+          </section>
+        )}
+
+        {!loading && nearestBooking && (
+          <section className="max-w-md mx-auto mb-8">
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+              <p className="text-sm font-medium text-indigo-100 mb-1">Next Appointment</p>
+              <h2 className="text-xl font-bold mb-3">{nearestBooking.shopName}</h2>
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between">
+                  <span className="text-indigo-100">Service</span>
+                  <span className="font-semibold">{nearestBooking.service}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-indigo-100">Booking ID</span>
+                  <span className="font-semibold text-indigo-200 text-xs">{nearestBooking.bookingId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-indigo-100">Date</span>
+                  <span className="font-semibold">
+                    {new Date(nearestBooking.date?.split('T')[0] || nearestBooking.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-indigo-100">Time</span>
+                  <span className="font-semibold">{nearestBooking.time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-indigo-100">Queue</span>
+                  <span className="font-semibold">#{nearestBooking.queuePosition}</span>
+                </div>
+              </div>
+              <Link
+                href={`/status?bookingId=${nearestBooking.bookingId}`}
+                className="block w-full text-center bg-white text-indigo-600 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition text-sm"
+              >
+                Check Status
+              </Link>
+            </div>
+            {moreCount > 0 && (
+              <Link
+                href="/bookings"
+                className="block w-full text-center bg-indigo-100 text-indigo-700 py-2 rounded-lg font-semibold hover:bg-indigo-200 transition text-sm mt-2"
+              >
+                +{moreCount} More Booking{moreCount > 1 ? 's' : ''}
+              </Link>
+            )}
+          </section>
+        )}
+
+        {!loading && !nearestBooking && (
+          <section className="max-w-md mx-auto mb-8 text-center">
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-3xl mb-2">📅</p>
+              <p className="text-gray-600">No upcoming bookings</p>
+              <Link
+                href="/book-slot"
+                className="mt-3 inline-block text-indigo-600 font-semibold text-sm hover:underline"
+              >
+                Book your first appointment →
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* Features Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
