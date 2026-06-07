@@ -2,9 +2,12 @@
  * API client for Queue application
  */
 
-import { ApiResponse } from './types';
+import { ApiResponse, BookingCreateResponse } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const API_BASE_URL =
+  typeof window !== 'undefined'
+    ? ''
+    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 /**
  * Generic fetch wrapper with error handling
@@ -23,11 +26,15 @@ async function apiCall<T>(
       ...options,
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
+      return {
+        success: false,
+        error: data.error || `API Error: ${response.status}`,
+      };
     }
 
-    const data = await response.json();
     return {
       success: true,
       data,
@@ -45,8 +52,18 @@ async function apiCall<T>(
  * Booking API calls
  */
 export const bookingAPI = {
-  create: async (bookingData: any) => {
-    return apiCall('/api/bookings', {
+  create: async (bookingData: {
+    shopId: string;
+    shopName: string;
+    serviceId: string;
+    service: string;
+    customerName: string;
+    customerPhone: string;
+    date: string;
+    time: string;
+    customerEmail?: string;
+  }) => {
+    return apiCall<BookingCreateResponse>('/api/bookings', {
       method: 'POST',
       body: JSON.stringify(bookingData),
     });
@@ -75,6 +92,20 @@ export const notificationAPI = {
  * Vendor API calls
  */
 export const vendorAPI = {
+  list: async () => {
+    return apiCall<{ success: boolean; data: { id: string; shopName: string }[] }>(
+      '/api/vendors',
+      { method: 'GET' }
+    );
+  },
+
+  getServices: async (vendorId: string) => {
+    return apiCall<{
+      success: boolean;
+      data: { id: string; name: string; estimatedTime: number; price: number }[];
+    }>(`/api/vendors/${vendorId}/services`, { method: 'GET' });
+  },
+
   getQueue: async (vendorId: string) => {
     return apiCall(`/api/vendors/${vendorId}/queue`, {
       method: 'GET',

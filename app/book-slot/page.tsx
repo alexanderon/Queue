@@ -4,19 +4,48 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import BookingForm from '@/components/BookingForm';
 import Link from 'next/link';
+import { bookingAPI } from '@/lib/api-client';
+import { BookingCreateResponse, BookingForm as BookingFormData } from '@/lib/types';
 
 export default function BookSlot() {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [bookingData, setBookingData] = useState<any>(null);
+  const [bookingData, setBookingData] = useState<BookingCreateResponse['booking'] | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleBookingSubmit = (data: any) => {
-    setBookingData(data);
+  const handleBookingSubmit = async (data: BookingFormData) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    const response = await bookingAPI.create({
+      shopId: data.shopId,
+      shopName: data.shopName,
+      serviceId: data.serviceId,
+      service: data.service,
+      customerName: data.customerName.trim(),
+      customerPhone: data.customerPhone.trim(),
+      date: data.date,
+      time: data.time,
+    });
+
+    setIsSubmitting(false);
+
+    if (!response.success || !response.data?.booking) {
+      setSubmitError(response.error || 'Failed to create booking. Please try again.');
+      return;
+    }
+
+    setBookingData(response.data.booking);
     setBookingConfirmed(true);
-    // Here you would send data to API
-    console.log('Booking submitted:', data);
   };
 
   if (bookingConfirmed && bookingData) {
+    const formattedDate = new Date(bookingData.date).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
     return (
       <main className="min-h-screen bg-gradient-to-b from-green-50 to-white">
         <Header />
@@ -24,8 +53,11 @@ export default function BookSlot() {
           <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
             <div className="text-5xl mb-4">✅</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Booking Confirmed!</h2>
-            
+
             <div className="bg-green-50 rounded-lg p-4 mb-6 text-left">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Booking ID:</strong> {bookingData.bookingId}
+              </p>
               <p className="text-sm text-gray-600 mb-2">
                 <strong>Shop:</strong> {bookingData.shopName}
               </p>
@@ -33,18 +65,21 @@ export default function BookSlot() {
                 <strong>Service:</strong> {bookingData.service}
               </p>
               <p className="text-sm text-gray-600 mb-2">
-                <strong>Date:</strong> {bookingData.date}
+                <strong>Date:</strong> {formattedDate}
               </p>
               <p className="text-sm text-gray-600 mb-2">
                 <strong>Time:</strong> {bookingData.time}
               </p>
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Queue Position:</strong> #{bookingData.queuePosition}
+              </p>
               <p className="text-sm text-gray-600">
-                <strong>Queue Position:</strong> #{Math.floor(Math.random() * 10) + 1}
+                <strong>Estimated Wait:</strong> ~{bookingData.estimatedTime} min
               </p>
             </div>
 
             <p className="text-gray-600 mb-6">
-              You'll receive WhatsApp notifications about your status.
+              You&apos;ll receive WhatsApp notifications about your status.
             </p>
 
             <div className="flex flex-col gap-3">
@@ -73,7 +108,11 @@ export default function BookSlot() {
       <div className="container mx-auto px-4 pt-8 pb-16">
         <div className="max-w-md mx-auto">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Book Your Slot</h1>
-          <BookingForm onSubmit={handleBookingSubmit} />
+          <BookingForm
+            onSubmit={handleBookingSubmit}
+            isSubmitting={isSubmitting}
+            submitError={submitError}
+          />
           <Link
             href="/"
             className="block text-center text-indigo-600 hover:text-indigo-700 mt-4 text-sm"

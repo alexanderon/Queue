@@ -77,6 +77,8 @@ export const API_ENDPOINTS = {
   BOOKINGS: '/api/bookings',
   BOOKINGS_STATUS: (id: string) => `/api/bookings/${id}`,
   NOTIFICATIONS_WHATSAPP: '/api/notifications/whatsapp',
+  VENDORS: '/api/vendors',
+  VENDOR_SERVICES: (vendorId: string) => `/api/vendors/${vendorId}/services`,
   VENDOR_QUEUE: (vendorId: string) => `/api/vendors/${vendorId}/queue`,
 } as const;
 

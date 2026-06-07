@@ -82,12 +82,31 @@ export interface ApiResponse<T> {
 }
 
 export interface BookingForm {
+  shopId: string;
   shopName: string;
+  serviceId: string;
   service: string;
   date: string;
   time: string;
   customerName: string;
   customerPhone: string;
+}
+
+export interface BookingCreateResponse {
+  success: boolean;
+  booking: {
+    bookingId: string;
+    shopName: string;
+    service: string;
+    date: string;
+    time: string;
+    customerName: string;
+    customerPhone: string;
+    status: string;
+    queuePosition: number;
+    estimatedTime: number;
+    createdAt: string;
+  };
 }
 
 export interface VendorSettings {
