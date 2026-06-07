@@ -109,6 +109,26 @@ export const vendorAPI = {
     );
   },
 
+  create: async (data: {
+    shopName: string;
+    email: string;
+    password: string;
+    businessPhone: string;
+    whatsappNumber?: string;
+  }) => {
+    return apiCall('/api/vendors', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  login: async (shopName: string, password: string) => {
+    return apiCall('/api/vendors/login', {
+      method: 'POST',
+      body: JSON.stringify({ shopName, password }),
+    });
+  },
+
   getServices: async (vendorId: string) => {
     return apiCall<{
       success: boolean;
