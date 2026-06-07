@@ -75,7 +75,7 @@ export default function Status() {
 
               <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
                 <p className="text-sm text-blue-900">
-                  💬 You'll get a WhatsApp notification 10 minutes before your turn!
+                  💬 You&apos;ll get a WhatsApp notification 10 minutes before your turn!
                 </p>
               </div>
 

@@ -11,8 +11,7 @@ interface StatusFormProps {
 export default function StatusForm({ onSubmit, loading }: StatusFormProps) {
   const [bookingId, setBookingId] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (bookingId.trim()) {
       onSubmit({ bookingId });
     }

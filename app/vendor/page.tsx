@@ -62,7 +62,7 @@ export default function VendorHome() {
             </form>
 
             <p className="text-center text-gray-600 text-sm mt-4">
-              Don't have an account? <a href="#" className="text-indigo-600 hover:text-indigo-700">Sign up here</a>
+              Don&apos;t have an account? <a href="#" className="text-indigo-600 hover:text-indigo-700">Sign up here</a>
             </p>
 
             <Link

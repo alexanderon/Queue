@@ -21,28 +21,59 @@ export default function ServicesManagement() {
   ]);
 
   const [showForm, setShowForm] = useState(false);
-  const [newService, setNewService] = useState({
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
     name: '',
     estimatedTime: '',
     price: '',
   });
 
-  const handleAddService = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData({ name: '', estimatedTime: '', price: '' });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleEditClick = (service: Service) => {
+    setFormData({
+      name: service.name,
+      estimatedTime: String(service.estimatedTime),
+      price: String(service.price),
+    });
+    setEditingId(service.id);
+    setShowForm(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newService.name.trim()) {
+    if (!formData.name.trim()) return;
+
+    if (editingId !== null) {
+      setServices((prev) =>
+        prev.map((s) =>
+          s.id === editingId
+            ? {
+                ...s,
+                name: formData.name,
+                estimatedTime: parseInt(formData.estimatedTime) || 30,
+                price: parseFloat(formData.price) || 0,
+              }
+            : s
+        )
+      );
+    } else {
       setServices([
         ...services,
         {
-          id: Math.max(...services.map((s) => s.id)) + 1,
-          name: newService.name,
-          estimatedTime: parseInt(newService.estimatedTime) || 30,
-          price: parseFloat(newService.price) || 0,
+          id: Math.max(...services.map((s) => s.id), 0) + 1,
+          name: formData.name,
+          estimatedTime: parseInt(formData.estimatedTime) || 30,
+          price: parseFloat(formData.price) || 0,
           active: true,
         },
       ]);
-      setNewService({ name: '', estimatedTime: '', price: '' });
-      setShowForm(false);
     }
+    resetForm();
   };
 
   const toggleServiceActive = (id: number) => {
@@ -76,16 +107,18 @@ export default function ServicesManagement() {
 
         {showForm && (
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Service</h2>
-            <form onSubmit={handleAddService} className="space-y-4">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">
+              {editingId !== null ? 'Edit Service' : 'Add New Service'}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Service Name
                 </label>
                 <input
                   type="text"
-                  value={newService.name}
-                  onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                   placeholder="e.g., Haircut"
                   required
@@ -99,9 +132,9 @@ export default function ServicesManagement() {
                   </label>
                   <input
                     type="number"
-                    value={newService.estimatedTime}
+                    value={formData.estimatedTime}
                     onChange={(e) =>
-                      setNewService({ ...newService, estimatedTime: e.target.value })
+                      setFormData({ ...formData, estimatedTime: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                     placeholder="30"
@@ -113,8 +146,8 @@ export default function ServicesManagement() {
                   </label>
                   <input
                     type="number"
-                    value={newService.price}
-                    onChange={(e) => setNewService({ ...newService, price: e.target.value })}
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                     placeholder="500"
                   />
@@ -126,11 +159,11 @@ export default function ServicesManagement() {
                   type="submit"
                   className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition"
                 >
-                  Add Service
+                  {editingId !== null ? 'Update Service' : 'Add Service'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={resetForm}
                   className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-semibold hover:bg-gray-300 transition"
                 >
                   Cancel
@@ -149,16 +182,24 @@ export default function ServicesManagement() {
                   ⏱️ {service.estimatedTime} min | 💰 ₹{service.price}
                 </p>
               </div>
-              <button
-                onClick={() => toggleServiceActive(service.id)}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
-                  service.active
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                }`}
-              >
-                {service.active ? 'Active' : 'Inactive'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEditClick(service)}
+                  className="px-3 py-2 rounded-lg font-semibold text-sm transition bg-blue-100 text-blue-800 hover:bg-blue-200"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => toggleServiceActive(service.id)}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
+                    service.active
+                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                      : 'bg-red-100 text-red-800 hover:bg-red-200'
+                  }`}
+                >
+                  {service.active ? 'Active' : 'Inactive'}
+                </button>
+              </div>
             </div>
           ))}
         </div>
