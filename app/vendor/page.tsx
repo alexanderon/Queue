@@ -44,9 +44,9 @@ export default function VendorHome() {
     const res = await vendorAPI.login(vendorName, password);
     if (res.success && res.data) {
       const d = res.data as any;
-      sessionStorage.setItem('vendorId', d.id);
-      sessionStorage.setItem('vendorName', d.shopName);
-      setVendorName(d.shopName);
+      sessionStorage.setItem('vendorId', d.data.id);
+      sessionStorage.setItem('vendorName', d.data.shopName);
+      setVendorName(d.data.shopName);
       setIsLoggedIn(true);
     } else {
       setError(res.error || 'Login failed');
@@ -67,9 +67,9 @@ export default function VendorHome() {
     });
     if (res.success && res.data) {
       const d = res.data as any;
-      sessionStorage.setItem('vendorId', d.id);
-      sessionStorage.setItem('vendorName', d.shopName);
-      setVendorName(d.shopName);
+      sessionStorage.setItem('vendorId', d.data.id);
+      sessionStorage.setItem('vendorName', d.data.shopName);
+      setVendorName(d.data.shopName);
       resetSignup();
       setShowSignup(false);
       setIsLoggedIn(true);

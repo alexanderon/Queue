@@ -38,12 +38,12 @@ export default function Settings() {
     if (res.success && res.data) {
       const d = res.data as any;
       setSettings({
-        shopName: d.shopName || '',
-        whatsappNumber: d.whatsappNumber || '',
-        notifyBeforeMinutes: d.notifyBeforeMinutes || '15',
-        enablePredictions: d.enablePredictions !== undefined ? d.enablePredictions : true,
-        businessStartTime: d.businessStartTime || '09:00',
-        businessEndTime: d.businessEndTime || '19:00',
+        shopName: d.data.shopName || '',
+        whatsappNumber: d.data.whatsappNumber || '',
+        notifyBeforeMinutes: d.data.notifyBeforeMinutes || '15',
+        enablePredictions: d.data.enablePredictions !== undefined ? d.data.enablePredictions : true,
+        businessStartTime: d.data.businessStartTime || '09:00',
+        businessEndTime: d.data.businessEndTime || '19:00',
       });
     } else {
       setError(res.error || 'Failed to fetch settings');
@@ -71,7 +71,7 @@ export default function Settings() {
       setSuccess('Settings saved successfully!');
       if (res.data) {
         const d = res.data as any;
-        sessionStorage.setItem('vendorName', d.shopName);
+        sessionStorage.setItem('vendorName', d.data.shopName);
       }
     } else {
       setError(res.error || 'Failed to save settings');
