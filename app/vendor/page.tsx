@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { vendorAPI } from '@/lib/api-client';
@@ -8,12 +8,20 @@ import { vendorAPI } from '@/lib/api-client';
 export default function VendorHome() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [vendorName, setVendorName] = useState('');
+
+  useEffect(() => {
+    const storedId = sessionStorage.getItem('vendorId');
+    const storedName = sessionStorage.getItem('vendorName');
+    if (storedId) {
+      setIsLoggedIn(true);
+      setVendorName(storedName || '');
+    }
+  }, []);
   const [password, setPassword] = useState('');
   const [showSignup, setShowSignup] = useState(false);
   const [error, setError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // Signup form fields
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
@@ -34,11 +42,14 @@ export default function VendorHome() {
     setError('');
     setLoginLoading(true);
     const res = await vendorAPI.login(vendorName, password);
-    if (res.success) {
+    if (res.success && res.data) {
+      const d = res.data as any;
+      sessionStorage.setItem('vendorId', d.id);
+      sessionStorage.setItem('vendorName', d.shopName);
+      setVendorName(d.shopName);
       setIsLoggedIn(true);
     } else {
-      setIsLoggedIn(true);
-      setVendorName(vendorName);
+      setError(res.error || 'Login failed');
     }
     setLoginLoading(false);
   };
@@ -54,9 +65,11 @@ export default function VendorHome() {
       businessPhone: signupPhone,
       whatsappNumber: signupWhatsapp || undefined,
     });
-    if (res.success) {
-      setVendorName(signupName);
-      setPassword(signupPassword);
+    if (res.success && res.data) {
+      const d = res.data as any;
+      sessionStorage.setItem('vendorId', d.id);
+      sessionStorage.setItem('vendorName', d.shopName);
+      setVendorName(d.shopName);
       resetSignup();
       setShowSignup(false);
       setIsLoggedIn(true);
@@ -64,6 +77,13 @@ export default function VendorHome() {
       setError(res.error || 'Signup failed');
     }
     setSignupLoading(false);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('vendorId');
+    sessionStorage.removeItem('vendorName');
+    setIsLoggedIn(false);
+    setVendorName('');
   };
 
   if (!isLoggedIn) {
@@ -288,7 +308,7 @@ export default function VendorHome() {
           </div>
 
           <button
-            onClick={() => setIsLoggedIn(false)}
+            onClick={handleLogout}
             className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition"
           >
             Logout

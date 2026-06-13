@@ -1,75 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Mock queue data - in production this would be a real database
-const vendorQueues: any = {
-  vendor1: [
-    {
-      id: 1,
-      name: 'John Doe',
-      service: 'Haircut',
-      position: 1,
-      arrivalTime: '10:30 AM',
-      status: 'serving',
-      estimatedTime: 25,
-      bookingId: 'BK1234567',
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      service: 'Beard Trim',
-      position: 2,
-      arrivalTime: '10:45 AM',
-      status: 'waiting',
-      estimatedTime: 40,
-      bookingId: 'BK1234568',
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      service: 'Hair Color',
-      position: 3,
-      arrivalTime: '11:00 AM',
-      status: 'waiting',
-      estimatedTime: 100,
-      bookingId: 'BK1234569',
-    },
-  ],
-};
+import connectDB from '@/lib/db';
+import Booking from '@/lib/models/Booking';
+import Vendor from '@/lib/models/Vendor';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { vendorId: string } }
 ) {
   try {
+    await connectDB();
     const { vendorId } = params;
 
-    const queue = vendorQueues[vendorId];
-
-    if (!queue) {
-      return NextResponse.json(
-        {
-          vendorId,
-          queue: [],
-          message: 'No queue data found for this vendor',
-        },
-        { status: 200 }
-      );
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
     }
 
-    return NextResponse.json(
-      {
-        vendorId,
-        queue,
-        totalInQueue: queue.length,
-        currentlyServing: queue.find((item: any) => item.status === 'serving'),
-      },
-      { status: 200 }
-    );
+    const bookings = await Booking.find({
+      shopId: vendorId,
+      status: { $in: ['confirmed', 'waiting', 'serving'] },
+    }).sort({ queuePosition: 1 });
+
+    const currentlyServing = bookings.find((b) => b.status === 'serving');
+
+    const queue = bookings.map((b) => ({
+      id: b._id.toString(),
+      bookingId: b.bookingId,
+      name: b.customerName,
+      service: b.service,
+      position: b.queuePosition,
+      arrivalTime: b.time,
+      status: b.status,
+      estimatedTime: b.estimatedTime,
+    }));
+
+    return NextResponse.json({
+      vendorId,
+      queue,
+      totalInQueue: queue.length,
+      currentlyServing: currentlyServing
+        ? {
+            id: currentlyServing._id.toString(),
+            name: currentlyServing.customerName,
+            bookingId: currentlyServing.bookingId,
+          }
+        : null,
+    });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch queue' },
-      { status: 500 }
-    );
+    console.error('Fetch queue error:', error);
+    return NextResponse.json({ error: 'Failed to fetch queue' }, { status: 500 });
   }
 }
 
@@ -78,48 +57,59 @@ export async function PUT(
   { params }: { params: { vendorId: string } }
 ) {
   try {
+    await connectDB();
     const { vendorId } = params;
     const body = await request.json();
-    const { customerId, status } = body;
+    const { bookingId, status } = body;
 
-    if (!customerId || !status) {
+    if (!bookingId || !status) {
       return NextResponse.json(
-        { error: 'customerId and status are required' },
+        { error: 'bookingId and status are required' },
         { status: 400 }
       );
     }
 
-    const queue = vendorQueues[vendorId];
-    if (!queue) {
+    const validStatuses = ['confirmed', 'waiting', 'serving', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
       return NextResponse.json(
-        { error: 'Vendor not found' },
-        { status: 404 }
+        { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+        { status: 400 }
       );
     }
 
-    // Update customer status in queue
-    const customer = queue.find((item: any) => item.id === customerId);
-    if (customer) {
-      customer.status = status;
-
-      // TODO: Send WhatsApp notification to customer about status change
-      console.log(
-        `Queue status updated for customer ${customerId}: ${status}`
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        queue,
-        message: 'Queue updated successfully',
-      },
-      { status: 200 }
+    const booking = await Booking.findOneAndUpdate(
+      { bookingId, shopId: vendorId },
+      { status },
+      { new: true }
     );
+
+    if (!booking) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+
+    const bookings = await Booking.find({
+      shopId: vendorId,
+      status: { $in: ['confirmed', 'waiting', 'serving'] },
+    }).sort({ queuePosition: 1 });
+
+    const queue = bookings.map((b) => ({
+      id: b._id.toString(),
+      bookingId: b.bookingId,
+      name: b.customerName,
+      service: b.service,
+      position: b.queuePosition,
+      arrivalTime: b.time,
+      status: b.status,
+      estimatedTime: b.estimatedTime,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      queue,
+      message: 'Queue updated successfully',
+    });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to update queue' },
-      { status: 500 }
-    );
+    console.error('Update queue error:', error);
+    return NextResponse.json({ error: 'Failed to update queue' }, { status: 500 });
   }
 }

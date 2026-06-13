@@ -1,26 +1,92 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import { vendorAPI } from '@/lib/api-client';
 
 export default function Settings() {
+  const router = useRouter();
   const [settings, setSettings] = useState({
-    shopName: 'Elite Barber Shop',
-    whatsappNumber: '+91 98765 43210',
-    notifyBeforeMinutes: '10',
+    shopName: '',
+    whatsappNumber: '',
+    notifyBeforeMinutes: '15',
     enablePredictions: true,
-    businessStartTime: '10:00',
-    businessEndTime: '20:00',
+    businessStartTime: '09:00',
+    businessEndTime: '19:00',
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const vendorId = typeof window !== 'undefined' ? sessionStorage.getItem('vendorId') : null;
+
+  useEffect(() => {
+    if (!vendorId) {
+      router.push('/vendor');
+      return;
+    }
+    fetchSettings();
+  }, [vendorId, router]);
+
+  const fetchSettings = async () => {
+    if (!vendorId) return;
+    setLoading(true);
+    const res = await vendorAPI.getSettings(vendorId);
+    if (res.success && res.data) {
+      const d = res.data as any;
+      setSettings({
+        shopName: d.shopName || '',
+        whatsappNumber: d.whatsappNumber || '',
+        notifyBeforeMinutes: d.notifyBeforeMinutes || '15',
+        enablePredictions: d.enablePredictions !== undefined ? d.enablePredictions : true,
+        businessStartTime: d.businessStartTime || '09:00',
+        businessEndTime: d.businessEndTime || '19:00',
+      });
+    } else {
+      setError(res.error || 'Failed to fetch settings');
+    }
+    setLoading(false);
+  };
 
   const handleChange = (field: string, value: any) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    alert('Settings saved successfully!');
+  const handleSave = async () => {
+    if (!vendorId) return;
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    const res = await vendorAPI.updateSettings(vendorId, {
+      whatsappNumber: settings.whatsappNumber,
+      notifyBeforeMinutes: settings.notifyBeforeMinutes,
+      enablePredictions: settings.enablePredictions,
+      businessStartTime: settings.businessStartTime,
+      businessEndTime: settings.businessEndTime,
+    });
+    if (res.success) {
+      setSuccess('Settings saved successfully!');
+      if (res.data) {
+        const d = res.data as any;
+        sessionStorage.setItem('vendorName', d.shopName);
+      }
+    } else {
+      setError(res.error || 'Failed to save settings');
+    }
+    setSaving(false);
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+        <Header />
+        <div className="container mx-auto px-4 pt-8 pb-16 text-center text-gray-500">Loading settings...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
@@ -35,9 +101,15 @@ export default function Settings() {
 
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
 
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-4">{error}</div>
+        )}
+        {success && (
+          <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm mb-4">{success}</div>
+        )}
+
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl">
           <div className="space-y-6">
-            {/* Shop Settings */}
             <div>
               <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">
                 Shop Information
@@ -51,8 +123,8 @@ export default function Settings() {
                   <input
                     type="text"
                     value={settings.shopName}
-                    onChange={(e) => handleChange('shopName', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                   />
                 </div>
 
@@ -83,7 +155,6 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* WhatsApp Settings */}
             <div>
               <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">
                 WhatsApp Notifications
@@ -119,7 +190,6 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* AI Settings */}
             <div>
               <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">
                 AI & Predictions
@@ -145,21 +215,13 @@ export default function Settings() {
           <div className="mt-8 flex gap-3">
             <button
               onClick={handleSave}
-              className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition"
+              disabled={saving}
+              className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
             >
-              Save Settings
+              {saving ? 'Saving...' : 'Save Settings'}
             </button>
             <button
-              onClick={() =>
-                setSettings({
-                  shopName: 'Elite Barber Shop',
-                  whatsappNumber: '+91 98765 43210',
-                  notifyBeforeMinutes: '10',
-                  enablePredictions: true,
-                  businessStartTime: '10:00',
-                  businessEndTime: '20:00',
-                })
-              }
+              onClick={fetchSettings}
               className="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition"
             >
               Reset

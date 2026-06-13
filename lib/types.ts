@@ -111,9 +111,19 @@ export interface BookingCreateResponse {
 
 export interface VendorSettings {
   shopName: string;
+  email?: string;
+  businessPhone?: string;
   whatsappNumber: string;
   notifyBeforeMinutes: string;
   enablePredictions: boolean;
   businessStartTime: string;
   businessEndTime: string;
+}
+
+export interface AnalyticsData {
+  todayCustomers: number;
+  avgServiceTime: number;
+  avgWaitTime: number;
+  predictionAccuracy: number;
+  servicePerformance: { name: string; bookings: number; percentage: number }[];
 }

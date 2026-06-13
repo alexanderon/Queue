@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { bookingAPI } from '@/lib/api-client';
@@ -28,8 +28,12 @@ const statusColors: Record<string, string> = {
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<BookingDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetched = useRef(false);
 
   useEffect(() => {
+    if (fetched.current) return;
+    fetched.current = true;
+
     const fetchBookings = async () => {
       const res = await bookingAPI.list({ limit: 50 });
       if (res.success && res.data) {
@@ -45,20 +49,8 @@ export default function BookingsPage() {
             const db = new Date(`${b.date?.split('T')[0] || b.date}T${b.time}`);
             return da.getTime() - db.getTime();
           });
-        if (upcoming.length > 0) {
-          setBookings(upcoming);
-          setLoading(false);
-          return;
-        }
+        setBookings(upcoming);
       }
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      setBookings([
-        { bookingId: 'BK1234567', shopName: 'Elite Barber Shop', service: 'Haircut', date: now.toISOString(), time: `${h}:${m}`, customerName: 'You', status: 'confirmed', queuePosition: 3, estimatedTime: 25 },
-        { bookingId: 'BK1234568', shopName: 'Style Studio', service: 'Facial', date: new Date(Date.now() + 86400000).toISOString(), time: '10:00', customerName: 'You', status: 'confirmed', queuePosition: 1, estimatedTime: 40 },
-        { bookingId: 'BK1234569', shopName: 'Pro Salon', service: 'Hair Color', date: new Date(Date.now() + 172800000).toISOString(), time: '14:30', customerName: 'You', status: 'confirmed', queuePosition: 2, estimatedTime: 60 },
-      ]);
       setLoading(false);
     };
     fetchBookings();

@@ -38,6 +38,60 @@ export async function GET(
   }
 }
 
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { vendorId: string } }
+) {
+  try {
+    await connectDB();
+    const { vendorId } = params;
+    const body = await request.json();
+    const { name, estimatedTime, price } = body;
+
+    if (!name || !estimatedTime || !price) {
+      return NextResponse.json(
+        { error: 'Name, estimated time, and price are required' },
+        { status: 400 }
+      );
+    }
+
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+    }
+
+    const service = new Service({
+      vendorId,
+      name,
+      estimatedTime,
+      price,
+      active: true,
+    });
+
+    await service.save();
+
+    vendor.services.push(service._id);
+    await vendor.save();
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          id: service._id.toString(),
+          name: service.name,
+          estimatedTime: service.estimatedTime,
+          price: service.price,
+          active: service.active,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error('Create service error:', error);
+    return NextResponse.json({ error: 'Failed to create service' }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { vendorId: string } }

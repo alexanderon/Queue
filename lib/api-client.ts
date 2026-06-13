@@ -148,10 +148,40 @@ export const vendorAPI = {
       body: JSON.stringify(queueData),
     });
   },
+
+  createService: async (vendorId: string, data: { name: string; estimatedTime: number; price: number }) => {
+    return apiCall(`/api/vendors/${vendorId}/services`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateService: async (vendorId: string, data: { id: string; name?: string; estimatedTime?: number; price?: number; active?: boolean }) => {
+    return apiCall(`/api/vendors/${vendorId}/services`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  getSettings: async (vendorId: string) => {
+    return apiCall(`/api/vendors/${vendorId}/settings`, {
+      method: 'GET',
+    });
+  },
+
+  updateSettings: async (vendorId: string, data: any) => {
+    return apiCall(`/api/vendors/${vendorId}/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  getAnalytics: async (vendorId: string) => {
+    return apiCall(`/api/vendors/${vendorId}/analytics`, {
+      method: 'GET',
+    });
+  },
 };
 
-export default {
-  bookingAPI,
-  notificationAPI,
-  vendorAPI,
-};
+const apiClient = { bookingAPI, notificationAPI, vendorAPI };
+export default apiClient;

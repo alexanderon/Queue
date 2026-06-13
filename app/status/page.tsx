@@ -5,27 +5,36 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import StatusForm from '@/components/StatusForm';
 import Link from 'next/link';
+import { bookingAPI } from '@/lib/api-client';
 
 function StatusInner() {
   const searchParams = useSearchParams();
   const bookingIdFromUrl = searchParams.get('bookingId') || '';
   const [status, setStatus] = useState<any>(null);
   const [loading, setLoading] = useState(!!bookingIdFromUrl);
+  const [error, setError] = useState('');
   const [autoChecked, setAutoChecked] = useState(false);
 
   const handleCheckStatus = async (data: any) => {
     setLoading(true);
-    setTimeout(() => {
+    setError('');
+    const res = await bookingAPI.getStatus(data.bookingId);
+    if (res.success && res.data) {
+      const booking = (res.data as any).data;
       setStatus({
-        bookingId: data.bookingId,
-        shopName: 'Elite Barber Shop',
-        queuePosition: Math.floor(Math.random() * 15) + 1,
-        estimatedTime: Math.floor(Math.random() * 45) + 10,
-        currentlyServing: Math.floor(Math.random() * 10),
-        service: 'Haircut',
+        bookingId: booking.bookingId,
+        shopName: booking.shopName,
+        queuePosition: booking.queuePosition,
+        estimatedTime: booking.estimatedTime,
+        currentlyServing: booking.queuePosition > 1 ? booking.queuePosition - 1 : 0,
+        service: booking.service,
+        customerName: booking.customerName,
+        status: booking.status,
       });
-      setLoading(false);
-    }, 800);
+    } else {
+      setError(res.error || 'Booking not found');
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -41,6 +50,10 @@ function StatusInner() {
       <div className="container mx-auto px-4 pt-8 pb-16">
         <div className="max-w-md mx-auto">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Check Your Status</h1>
+
+          {error && (
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-4">{error}</div>
+          )}
 
           {loading && !status ? (
             <div className="bg-white rounded-lg shadow-lg p-6 text-center">
@@ -79,6 +92,11 @@ function StatusInner() {
                 </div>
 
                 <div className="mb-4 pb-4 border-b">
+                  <p className="text-sm text-gray-600">Service</p>
+                  <p className="text-lg font-semibold text-gray-900">{status.service}</p>
+                </div>
+
+                <div className="mb-4 pb-4 border-b">
                   <p className="text-sm text-gray-600">Your Position in Queue</p>
                   <p className="text-3xl font-bold text-indigo-600">#{status.queuePosition}</p>
                 </div>
@@ -92,6 +110,18 @@ function StatusInner() {
                   <p className="text-sm text-gray-600">Currently Serving</p>
                   <p className="text-lg font-semibold text-gray-900">Customer #{status.currentlyServing}</p>
                 </div>
+
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600">Status</p>
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${
+                    status.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    status.status === 'serving' ? 'bg-blue-100 text-blue-800' :
+                    status.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {status.status}
+                  </span>
+                </div>
               </div>
 
               <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
@@ -101,10 +131,10 @@ function StatusInner() {
               </div>
 
               <button
-                onClick={() => setStatus(null)}
+                onClick={() => { setStatus(null); setError(''); }}
                 className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition mb-3"
               >
-                Check Again
+                Check Another Booking
               </button>
 
               <Link

@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import { vendorAPI } from '@/lib/api-client';
 
 interface Service {
-  id: number;
+  id: string;
   name: string;
   estimatedTime: number;
   price: number;
@@ -13,20 +15,41 @@ interface Service {
 }
 
 export default function ServicesManagement() {
-  const [services, setServices] = useState<Service[]>([
-    { id: 1, name: 'Haircut', estimatedTime: 30, price: 500, active: true },
-    { id: 2, name: 'Beard Trim', estimatedTime: 15, price: 200, active: true },
-    { id: 3, name: 'Hair Color', estimatedTime: 60, price: 1500, active: true },
-    { id: 4, name: 'Massage', estimatedTime: 45, price: 800, active: true },
-  ]);
+  const router = useRouter();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const vendorId = typeof window !== 'undefined' ? sessionStorage.getItem('vendorId') : null;
 
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     estimatedTime: '',
     price: '',
   });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!vendorId) {
+      router.push('/vendor');
+      return;
+    }
+    fetchServices();
+  }, [vendorId, router]);
+
+  const fetchServices = async () => {
+    if (!vendorId) return;
+    setLoading(true);
+    const res = await vendorAPI.getServices(vendorId);
+    if (res.success && res.data) {
+      setServices((res.data as any).data || []);
+    } else {
+      setError(res.error || 'Failed to fetch services');
+    }
+    setLoading(false);
+  };
 
   const resetForm = () => {
     setFormData({ name: '', estimatedTime: '', price: '' });
@@ -44,45 +67,64 @@ export default function ServicesManagement() {
     setShowForm(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim() || !vendorId) return;
+
+    setSaving(true);
+    setError('');
 
     if (editingId !== null) {
-      setServices((prev) =>
-        prev.map((s) =>
-          s.id === editingId
-            ? {
-                ...s,
-                name: formData.name,
-                estimatedTime: parseInt(formData.estimatedTime) || 30,
-                price: parseFloat(formData.price) || 0,
-              }
-            : s
-        )
-      );
+      const res = await vendorAPI.updateService(vendorId, {
+        id: editingId,
+        name: formData.name,
+        estimatedTime: parseInt(formData.estimatedTime) || 30,
+        price: parseFloat(formData.price) || 0,
+      });
+      if (res.success) {
+        await fetchServices();
+        resetForm();
+      } else {
+        setError(res.error || 'Failed to update service');
+      }
     } else {
-      setServices([
-        ...services,
-        {
-          id: Math.max(...services.map((s) => s.id), 0) + 1,
-          name: formData.name,
-          estimatedTime: parseInt(formData.estimatedTime) || 30,
-          price: parseFloat(formData.price) || 0,
-          active: true,
-        },
-      ]);
+      const res = await vendorAPI.createService(vendorId, {
+        name: formData.name,
+        estimatedTime: parseInt(formData.estimatedTime) || 30,
+        price: parseFloat(formData.price) || 0,
+      });
+      if (res.success) {
+        await fetchServices();
+        resetForm();
+      } else {
+        setError(res.error || 'Failed to create service');
+      }
     }
-    resetForm();
+    setSaving(false);
   };
 
-  const toggleServiceActive = (id: number) => {
-    setServices((prev) =>
-      prev.map((service) =>
-        service.id === id ? { ...service, active: !service.active } : service
-      )
-    );
+  const toggleServiceActive = async (service: Service) => {
+    if (!vendorId) return;
+    setError('');
+    const res = await vendorAPI.updateService(vendorId, {
+      id: service.id,
+      active: !service.active,
+    });
+    if (res.success) {
+      await fetchServices();
+    } else {
+      setError(res.error || 'Failed to toggle service');
+    }
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+        <Header />
+        <div className="container mx-auto px-4 pt-8 pb-16 text-center text-gray-500">Loading services...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
@@ -98,12 +140,16 @@ export default function ServicesManagement() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Services</h1>
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => { resetForm(); setShowForm(!showForm); }}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition text-sm"
           >
             + Add Service
           </button>
         </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-4">{error}</div>
+        )}
 
         {showForm && (
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -157,9 +203,10 @@ export default function ServicesManagement() {
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition"
+                  disabled={saving}
+                  className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
                 >
-                  {editingId !== null ? 'Update Service' : 'Add Service'}
+                  {saving ? 'Saving...' : editingId !== null ? 'Update Service' : 'Add Service'}
                 </button>
                 <button
                   type="button"
@@ -174,6 +221,11 @@ export default function ServicesManagement() {
         )}
 
         <div className="space-y-3">
+          {services.length === 0 && (
+            <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+              No services added yet. Click the Add Service button to get started.
+            </div>
+          )}
           {services.map((service) => (
             <div key={service.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
               <div>
@@ -190,7 +242,7 @@ export default function ServicesManagement() {
                   Edit
                 </button>
                 <button
-                  onClick={() => toggleServiceActive(service.id)}
+                  onClick={() => toggleServiceActive(service)}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
                     service.active
                       ? 'bg-green-100 text-green-800 hover:bg-green-200'

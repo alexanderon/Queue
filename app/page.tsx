@@ -35,8 +35,12 @@ export default function Home() {
   const [nearestBooking, setNearestBooking] = useState<BookingDisplay | null>(null);
   const [moreCount, setMoreCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const fetched = useRef(false);
 
   useEffect(() => {
+    if (fetched.current) return;
+    fetched.current = true;
+
     const fetchBookings = async () => {
       const res = await bookingAPI.list({ limit: 50 });
       if (res.success && res.data) {
@@ -47,22 +51,10 @@ export default function Home() {
           setMoreCount(upcoming.length - 1);
         }
       }
-      if (!nearestBooking) {
-        const now = new Date();
-        const h = String(now.getHours()).padStart(2, '0');
-        const m = String(now.getMinutes()).padStart(2, '0');
-        const mockBookings: BookingDisplay[] = [
-          { bookingId: 'BK1234567', shopName: 'Elite Barber Shop', service: 'Haircut', date: now.toISOString(), time: `${h}:${m}`, customerName: 'You', status: 'confirmed', queuePosition: 3, estimatedTime: 25 },
-          { bookingId: 'BK1234568', shopName: 'Style Studio', service: 'Facial', date: new Date(Date.now() + 86400000).toISOString(), time: '10:00', customerName: 'You', status: 'confirmed', queuePosition: 1, estimatedTime: 40 },
-          { bookingId: 'BK1234569', shopName: 'Pro Salon', service: 'Hair Color', date: new Date(Date.now() + 172800000).toISOString(), time: '14:30', customerName: 'You', status: 'confirmed', queuePosition: 2, estimatedTime: 60 },
-        ];
-        setNearestBooking(mockBookings[0]);
-        setMoreCount(mockBookings.length - 1);
-      }
       setLoading(false);
     };
     fetchBookings();
-  }, [nearestBooking]);
+  }, []);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
