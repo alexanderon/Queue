@@ -25,7 +25,10 @@ export async function POST(request: NextRequest) {
         ],
       };
     } else {
-      query = { shopName: identifier };
+      return NextResponse.json(
+        { error: 'Please enter a valid email or phone number' },
+        { status: 400 }
+      );
     }
 
     const vendor = await Vendor.findOne(query);

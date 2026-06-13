@@ -25,6 +25,7 @@ export default function VendorHome() {
       setVendorName(storedName || '');
     }
   }, []);
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showSignup, setShowSignup] = useState(false);
   const [error, setError] = useState('');
@@ -82,7 +83,7 @@ export default function VendorHome() {
     e.preventDefault();
     setError('');
     setLoginLoading(true);
-    const res = await vendorAPI.login(vendorName, password);
+    const res = await vendorAPI.login(loginIdentifier, password);
     if (res.success && res.data) {
       const d = res.data as any;
       sessionStorage.setItem('vendorId', d.data.id);
@@ -150,14 +151,14 @@ export default function VendorHome() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email, Phone or Shop Name
+                      Email or Phone
                     </label>
                     <input
                       type="text"
-                      value={vendorName}
-                      onChange={(e) => setVendorName(e.target.value)}
+                      value={loginIdentifier}
+                      onChange={(e) => setLoginIdentifier(e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
-                      placeholder="Enter your email, phone or shop name"
+                      placeholder="Enter your email or phone number"
                       required
                     />
                   </div>
