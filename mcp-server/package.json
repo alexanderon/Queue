@@ -1,0 +1,12 @@
+{
+  "name": "queue-mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server for Queue appointment system",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.9.0"
+  }
+}
