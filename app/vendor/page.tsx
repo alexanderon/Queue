@@ -10,6 +10,7 @@ const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
   ssr: false,
   loading: () => <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center text-sm text-gray-500">Loading map...</div>,
 });
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 
 export default function VendorHome() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -250,11 +251,13 @@ export default function VendorHome() {
                   <div className="border-t pt-4">
                     <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Address (optional)</h3>
                     <div className="space-y-3 mb-3">
-                      <input
-                        type="text"
+                      <AddressAutocomplete
                         value={signupAddress}
-                        onChange={(e) => setSignupAddress(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                        onChange={setSignupAddress}
+                        onLocationSelect={(loc) => setSignupLocation(loc)}
+                        onCityChange={setSignupCity}
+                        onStateChange={setSignupState}
+                        onPincodeChange={setSignupPincode}
                         placeholder="Street address"
                       />
                       <div className="grid grid-cols-2 gap-2">

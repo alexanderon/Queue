@@ -11,6 +11,7 @@ const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
   ssr: false,
   loading: () => <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center text-sm text-gray-500">Loading map...</div>,
 });
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 
 export default function Settings() {
   const router = useRouter();
@@ -181,11 +182,13 @@ export default function Settings() {
                 Business Address
               </h2>
               <div className="space-y-3">
-                <input
-                  type="text"
+                <AddressAutocomplete
                   value={settings.address}
-                  onChange={(e) => handleChange('address', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                  onChange={(val) => handleChange('address', val)}
+                  onLocationSelect={(loc) => handleChange('location', loc)}
+                  onCityChange={(val) => handleChange('city', val)}
+                  onStateChange={(val) => handleChange('state', val)}
+                  onPincodeChange={(val) => handleChange('pincode', val)}
                   placeholder="Street address"
                 />
                 <div className="grid grid-cols-2 gap-2">
