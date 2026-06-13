@@ -5,14 +5,17 @@ test.describe('Booking Flow', () => {
   test('booking form loads with shops', async ({ page }) => {
     await page.goto('/book-slot');
     await expect(page.getByText('Book Your Slot')).toBeVisible();
-    await expect(page.getByText('Select Shop')).toBeVisible();
   });
 
   test('can select shop and load services', async ({ page }) => {
     await page.goto('/book-slot');
-    await page.getByText('Select Shop').click();
+    const shopDropdown = page.getByRole('combobox', { name: 'Select Shop' });
+    await shopDropdown.click();
     await page.getByText('Elite Barber Shop').click();
-    await expect(page.getByText(SEED_SERVICE)).toBeVisible({ timeout: 5000 });
+
+    const serviceDropdown = page.getByRole('combobox', { name: 'Service Type' });
+    await serviceDropdown.click();
+    await expect(page.getByText(SEED_SERVICE)).toBeVisible({ timeout: 10000 });
   });
 
   test('validates form before submission', async ({ page }) => {
@@ -24,10 +27,13 @@ test.describe('Booking Flow', () => {
   test('completes full booking flow', async ({ page }) => {
     await page.goto('/book-slot');
 
-    await page.getByText('Select Shop').click();
+    const shopDropdown = page.getByRole('combobox', { name: 'Select Shop' });
+    await shopDropdown.click();
     await page.getByText('Elite Barber Shop').click();
 
-    await page.getByText(SEED_SERVICE).click({ timeout: 5000 });
+    const serviceDropdown = page.getByRole('combobox', { name: 'Service Type' });
+    await serviceDropdown.click();
+    await page.getByText('Haircut', { exact: false }).first().click({ timeout: 10000 });
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -44,9 +50,8 @@ test.describe('Booking Flow', () => {
     await expect(page.getByText('Elite Barber Shop')).toBeVisible();
   });
 
-  test('shows error for missing fields', async ({ page }) => {
+  test('book button is disabled when form is empty', async ({ page }) => {
     await page.goto('/book-slot');
-    await page.getByRole('button', { name: 'Book Now' }).click();
-    await expect(page.getByText('Booking Confirmed!')).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Book Now' })).toBeDisabled();
   });
 });

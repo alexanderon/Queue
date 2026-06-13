@@ -4,7 +4,7 @@ import { TEST_USER } from './fixtures';
 test.describe('Home Page', () => {
   test('loads and shows hero section', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Queue')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Queue/ })).toBeVisible();
     await expect(page.getByText('Skip the wait')).toBeVisible();
     await expect(page.getByText('Book an Appointment')).toBeVisible();
   });
@@ -38,40 +38,38 @@ test.describe('Home Page', () => {
   });
 
   test('shows upcoming booking after phone lookup', async ({ page }) => {
+    // Trigger seed data
+    const seedRes = await page.request.get('/api/vendors');
+    let vendors;
+    await expect(async () => {
+      const res = await page.request.get('/api/vendors');
+      const data = await res.json();
+      expect(data.success).toBeTruthy();
+      expect(data.data.length).toBeGreaterThan(0);
+      vendors = data.data;
+    }).toPass({ timeout: 15000 });
+
+    const shop = vendors![0];
+    const svcRes = await page.request.get(`/api/vendors/${shop.id}/services`);
+    const services = await svcRes.json();
+    const service = services.data[0];
+
     const bookingDate = new Date();
     bookingDate.setDate(bookingDate.getDate() + 1);
 
-    const res = await page.request.post('/api/bookings', {
-      data: {
-        shopId: '',
-        shopName: 'Elite Barber Shop',
-        serviceId: '',
-        service: 'Haircut',
-        customerName: TEST_USER.name,
-        customerPhone: TEST_USER.phone,
-        date: bookingDate.toISOString().split('T')[0],
-        time: '14:30',
-      },
-    });
-
-    const vendorRes = await page.request.get('/api/vendors');
-    const vendors = await vendorRes.json();
-    const shop = vendors.data[0];
-    const svcRes = await page.request.get(`/api/vendors/${shop.id}/services`);
-    const services = await svcRes.json();
-
-    await page.request.post('/api/bookings', {
+    const bookRes = await page.request.post('/api/bookings', {
       data: {
         shopId: shop.id,
         shopName: shop.shopName,
-        serviceId: services.data[0].id,
-        service: services.data[0].name,
+        serviceId: service.id,
+        service: service.name,
         customerName: TEST_USER.name,
         customerPhone: TEST_USER.phone,
         date: bookingDate.toISOString().split('T')[0],
         time: '14:30',
       },
     });
+    expect(bookRes.ok()).toBeTruthy();
 
     await page.goto('/');
     await page.evaluate((phone) => {

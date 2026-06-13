@@ -52,40 +52,55 @@ const SEED_VENDORS = [
   },
 ];
 
+let seedPromise: Promise<boolean> | null = null;
+
 export async function seedVendorsIfEmpty() {
   const count = await Vendor.countDocuments();
-  if (count > 0) {
-    return false;
-  }
+  if (count > 0) return false;
+  if (seedPromise) return seedPromise;
 
-  for (const seed of SEED_VENDORS) {
-    const vendor = new Vendor({
-      shopName: seed.shopName,
-      email: seed.email,
-      password: seed.password,
-      businessPhone: seed.businessPhone,
-      whatsappNumber: seed.whatsappNumber,
-      services: [],
-      currentQueue: [],
-    });
-    await vendor.save();
+  seedPromise = (async () => {
+    for (const seed of SEED_VENDORS) {
+      try {
+        const exists = await Vendor.findOne({ email: seed.email });
+        if (exists) continue;
 
-    const serviceIds = [];
-    for (const svc of seed.services) {
-      const service = new Service({
-        vendorId: vendor._id,
-        name: svc.name,
-        estimatedTime: svc.estimatedTime,
-        price: svc.price,
-        active: true,
-      });
-      await service.save();
-      serviceIds.push(service._id);
+        const vendor = new Vendor({
+          shopName: seed.shopName,
+          email: seed.email,
+          password: seed.password,
+          businessPhone: seed.businessPhone,
+          whatsappNumber: seed.whatsappNumber,
+          services: [],
+          currentQueue: [],
+        });
+        await vendor.save();
+
+        const serviceIds = [];
+        for (const svc of seed.services) {
+          const service = new Service({
+            vendorId: vendor._id,
+            name: svc.name,
+            estimatedTime: svc.estimatedTime,
+            price: svc.price,
+            active: true,
+          });
+          await service.save();
+          serviceIds.push(service._id);
+        }
+
+        vendor.services = serviceIds;
+        await vendor.save();
+      } catch (err: any) {
+        if (err?.code !== 11000) throw err;
+      }
     }
+    return true;
+  })();
 
-    vendor.services = serviceIds;
-    await vendor.save();
+  try {
+    return await seedPromise;
+  } finally {
+    seedPromise = null;
   }
-
-  return true;
 }
