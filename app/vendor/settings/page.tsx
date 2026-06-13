@@ -5,6 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { vendorAPI } from '@/lib/api-client';
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center text-sm text-gray-500">Loading map...</div>,
+});
 
 export default function Settings() {
   const router = useRouter();
@@ -15,6 +21,11 @@ export default function Settings() {
     enablePredictions: true,
     businessStartTime: '09:00',
     businessEndTime: '19:00',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
+    location: { lat: 0, lng: 0 } as { lat: number; lng: number },
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,6 +55,11 @@ export default function Settings() {
         enablePredictions: d.data.enablePredictions !== undefined ? d.data.enablePredictions : true,
         businessStartTime: d.data.businessStartTime || '09:00',
         businessEndTime: d.data.businessEndTime || '19:00',
+        address: d.data.address || '',
+        city: d.data.city || '',
+        state: d.data.state || '',
+        pincode: d.data.pincode || '',
+        location: d.data.location || { lat: 0, lng: 0 },
       });
     } else {
       setError(res.error || 'Failed to fetch settings');
@@ -66,6 +82,11 @@ export default function Settings() {
       enablePredictions: settings.enablePredictions,
       businessStartTime: settings.businessStartTime,
       businessEndTime: settings.businessEndTime,
+      address: settings.address,
+      city: settings.city,
+      state: settings.state,
+      pincode: settings.pincode,
+      location: settings.location.lat ? settings.location : undefined,
     });
     if (res.success) {
       setSuccess('Settings saved successfully!');
@@ -152,6 +173,57 @@ export default function Settings() {
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">
+                Business Address
+              </h2>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={settings.address}
+                  onChange={(e) => handleChange('address', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                  placeholder="Street address"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={settings.city}
+                    onChange={(e) => handleChange('city', e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                    placeholder="City"
+                  />
+                  <input
+                    type="text"
+                    value={settings.state}
+                    onChange={(e) => handleChange('state', e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                    placeholder="State"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={settings.pincode}
+                  onChange={(e) => handleChange('pincode', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                  placeholder="Pincode"
+                />
+                <details className="text-sm">
+                  <summary className="text-indigo-600 cursor-pointer hover:text-indigo-700 font-medium">
+                    Pick location on map
+                  </summary>
+                  <div className="mt-3">
+                    <LocationPicker
+                      onAddressChange={(addr) => handleChange('address', addr)}
+                      onLocationChange={(loc) => handleChange('location', loc)}
+                      initialAddress={settings.address}
+                      initialLocation={settings.location.lat ? settings.location : undefined}
+                    />
+                  </div>
+                </details>
               </div>
             </div>
 

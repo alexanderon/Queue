@@ -26,6 +26,11 @@ export async function GET(
         enablePredictions: vendor.enablePredictions,
         businessStartTime: vendor.businessStartTime,
         businessEndTime: vendor.businessEndTime,
+        address: vendor.address || '',
+        city: vendor.city || '',
+        state: vendor.state || '',
+        pincode: vendor.pincode || '',
+        location: vendor.location || { lat: 0, lng: 0 },
       },
     });
   } catch (error) {
@@ -48,6 +53,11 @@ export async function PUT(
       enablePredictions,
       businessStartTime,
       businessEndTime,
+      address,
+      city,
+      state,
+      pincode,
+      location,
     } = body;
 
     const vendor = await Vendor.findById(vendorId);
@@ -60,6 +70,11 @@ export async function PUT(
     if (enablePredictions !== undefined) vendor.enablePredictions = enablePredictions;
     if (businessStartTime !== undefined) vendor.businessStartTime = businessStartTime;
     if (businessEndTime !== undefined) vendor.businessEndTime = businessEndTime;
+    if (address !== undefined) vendor.address = address;
+    if (city !== undefined) vendor.city = city;
+    if (state !== undefined) vendor.state = state;
+    if (pincode !== undefined) vendor.pincode = pincode;
+    if (location !== undefined) vendor.location = location;
 
     await vendor.save();
 
@@ -74,6 +89,11 @@ export async function PUT(
         enablePredictions: vendor.enablePredictions,
         businessStartTime: vendor.businessStartTime,
         businessEndTime: vendor.businessEndTime,
+        address: vendor.address || '',
+        city: vendor.city || '',
+        state: vendor.state || '',
+        pincode: vendor.pincode || '',
+        location: vendor.location || { lat: 0, lng: 0 },
       },
     });
   } catch (error) {
