@@ -73,6 +73,8 @@ export default function ChatBooking() {
   const [loadingShops, setLoadingShops] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const botReplyId = useRef(0);
+  const shopsRef = useRef(shops);
+  useEffect(() => { shopsRef.current = shops; }, [shops]);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -150,6 +152,7 @@ export default function ChatBooking() {
       botTyping('Sorry, no shops are available right now. Please try again later.', undefined, 0);
       return;
     }
+    setStep('select-shop');
     botTyping('Which shop would you like to visit?', shops.map(s => ({ label: s.shopName, value: s.id })));
   }, [shops, botTyping]);
 
@@ -193,14 +196,16 @@ export default function ChatBooking() {
     addMessage({ text: label, sender: 'user' });
 
     if (value === 'start') {
-      if (loadingShops) {
+      if (shops.length === 0 && loadingShops) {
         botTyping('Loading available shops...', undefined, 300);
         const check = setInterval(() => {
-          if (shops.length > 0) {
+          if (shopsRef.current.length > 0) {
             clearInterval(check);
-            showShops();
+            setStep('select-shop');
+            botTyping('Which shop would you like to visit?', shopsRef.current.map(s => ({ label: s.shopName, value: s.id })));
           }
         }, 300);
+        setTimeout(() => clearInterval(check), 15000);
         return;
       }
       showShops();
