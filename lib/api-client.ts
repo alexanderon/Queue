@@ -75,10 +75,11 @@ export const bookingAPI = {
     });
   },
 
-  list: async (params?: { shopId?: string; status?: string; limit?: number; skip?: number }) => {
+  list: async (params?: { shopId?: string; status?: string; phone?: string; limit?: number; skip?: number }) => {
     const query = new URLSearchParams();
     if (params?.shopId) query.set('shopId', params.shopId);
     if (params?.status) query.set('status', params.status);
+    if (params?.phone) query.set('phone', params.phone);
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.skip) query.set('skip', String(params.skip));
     const qs = query.toString();

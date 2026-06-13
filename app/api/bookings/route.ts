@@ -111,12 +111,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get('shopId');
     const status = searchParams.get('status');
+    const phone = searchParams.get('phone');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = parseInt(searchParams.get('skip') || '0');
 
     const query: any = {};
     if (shopId) query.shopId = shopId;
     if (status) query.status = status;
+    if (phone) query.customerPhone = phone;
 
     const bookings = await Booking.find(query)
       .sort({ createdAt: -1 })

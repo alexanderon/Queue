@@ -35,14 +35,27 @@ export default function Home() {
   const [nearestBooking, setNearestBooking] = useState<BookingDisplay | null>(null);
   const [moreCount, setMoreCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
   const fetched = useRef(false);
+  const phoneRef = useRef(customerPhone);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('customerPhone') || '';
+    setCustomerPhone(stored);
+    phoneRef.current = stored;
+  }, []);
 
   useEffect(() => {
     if (fetched.current) return;
+    if (!phoneRef.current) {
+      setLoading(false);
+      return;
+    }
     fetched.current = true;
 
     const fetchBookings = async () => {
-      const res = await bookingAPI.list({ limit: 50 });
+      const res = await bookingAPI.list({ limit: 50, phone: phoneRef.current });
       if (res.success && res.data) {
         const all = (res.data as any).data || [];
         const upcoming = sortByDateTime(all.filter(isUpcoming));
@@ -54,7 +67,18 @@ export default function Home() {
       setLoading(false);
     };
     fetchBookings();
-  }, []);
+  }, [customerPhone]);
+
+  const handlePhoneSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = phoneInput.trim();
+    if (!trimmed) return;
+    sessionStorage.setItem('customerPhone', trimmed);
+    setCustomerPhone(trimmed);
+    phoneRef.current = trimmed;
+    fetched.current = false;
+    setLoading(true);
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
@@ -78,6 +102,26 @@ export default function Home() {
               <p className="text-gray-500">Loading bookings...</p>
             </div>
           </section>
+        )}
+
+        {!loading && customerPhone && (
+          <p className="text-center text-xs text-gray-500 mb-2">
+            Phone: {customerPhone}{' '}
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('customerPhone');
+                setCustomerPhone('');
+                phoneRef.current = '';
+                fetched.current = false;
+                setPhoneInput('');
+                setNearestBooking(null);
+                setMoreCount(0);
+              }}
+              className="text-indigo-600 hover:text-indigo-700 underline"
+            >
+              (change)
+            </button>
+          </p>
         )}
 
         {!loading && nearestBooking && (
@@ -127,16 +171,43 @@ export default function Home() {
           </section>
         )}
 
-        {!loading && !nearestBooking && (
+        {!loading && !customerPhone && (
+          <section className="max-w-md mx-auto mb-8">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">Find Your Bookings</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Enter your phone number to look up your appointments.
+              </p>
+              <form onSubmit={handlePhoneSubmit} className="flex gap-2">
+                <input
+                  type="tel"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="Enter phone number"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition"
+                >
+                  Look Up
+                </button>
+              </form>
+            </div>
+          </section>
+        )}
+
+        {!loading && customerPhone && !nearestBooking && (
           <section className="max-w-md mx-auto mb-8 text-center">
             <div className="bg-white rounded-lg shadow p-6">
               <p className="text-3xl mb-2">📅</p>
-              <p className="text-gray-600">No upcoming bookings</p>
+              <p className="text-gray-600">No upcoming bookings for this number</p>
               <Link
                 href="/book-slot"
                 className="mt-3 inline-block text-indigo-600 font-semibold text-sm hover:underline"
               >
-                Book your first appointment →
+                Book an appointment →
               </Link>
             </div>
           </section>

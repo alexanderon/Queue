@@ -35,6 +35,7 @@ export default function BookSlot() {
       return;
     }
 
+    sessionStorage.setItem('customerPhone', data.customerPhone.trim());
     setBookingData(response.data.booking);
     setBookingConfirmed(true);
   };

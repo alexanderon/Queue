@@ -28,14 +28,27 @@ const statusColors: Record<string, string> = {
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<BookingDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
   const fetched = useRef(false);
+  const phoneRef = useRef(customerPhone);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('customerPhone') || '';
+    setCustomerPhone(stored);
+    phoneRef.current = stored;
+  }, []);
 
   useEffect(() => {
     if (fetched.current) return;
+    if (!phoneRef.current) {
+      setLoading(false);
+      return;
+    }
     fetched.current = true;
 
     const fetchBookings = async () => {
-      const res = await bookingAPI.list({ limit: 50 });
+      const res = await bookingAPI.list({ limit: 50, phone: phoneRef.current });
       if (res.success && res.data) {
         const all = (res.data as any).data || [];
         const upcoming = all
@@ -54,7 +67,18 @@ export default function BookingsPage() {
       setLoading(false);
     };
     fetchBookings();
-  }, []);
+  }, [customerPhone]);
+
+  const handlePhoneSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = phoneInput.trim();
+    if (!trimmed) return;
+    sessionStorage.setItem('customerPhone', trimmed);
+    setCustomerPhone(trimmed);
+    phoneRef.current = trimmed;
+    fetched.current = false;
+    setLoading(true);
+  };
 
   const formatDate = (raw: string) => {
     const d = new Date(raw?.split('T')[0] || raw);
@@ -78,7 +102,23 @@ export default function BookingsPage() {
           ← Back to Home
         </Link>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">All Bookings</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">All Bookings</h1>
+          {customerPhone && (
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('customerPhone');
+                setCustomerPhone('');
+                phoneRef.current = '';
+                fetched.current = false;
+                setPhoneInput('');
+              }}
+              className="text-sm text-indigo-600 hover:text-indigo-700 underline"
+            >
+              Different number?
+            </button>
+          )}
+        </div>
 
         {loading && (
           <div className="text-center py-12">
@@ -86,10 +126,37 @@ export default function BookingsPage() {
           </div>
         )}
 
-        {!loading && bookings.length === 0 && (
+        {!loading && !customerPhone && (
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">Find Your Bookings</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Enter your phone number to look up your appointments.
+              </p>
+              <form onSubmit={handlePhoneSubmit} className="flex gap-2">
+                <input
+                  type="tel"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="Enter phone number"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition"
+                >
+                  Look Up
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {!loading && customerPhone && bookings.length === 0 && (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <p className="text-4xl mb-3">📅</p>
-            <p className="text-gray-600 mb-4">No upcoming bookings found</p>
+            <p className="text-gray-600 mb-4">No upcoming bookings found for this number</p>
             <Link
               href="/book-slot"
               className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition text-sm"
