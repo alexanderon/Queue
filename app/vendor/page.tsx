@@ -43,6 +43,17 @@ export default function VendorHome() {
   const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
   const [signupLoading, setSignupLoading] = useState(false);
 
+  const validateField = (field: string, value: string) => {
+    let error = '';
+    if (value.trim().length === 0) { /* skip empty */ }
+    else if (field === 'shopName' && value.trim().length < 2) error = 'Shop name must be at least 2 characters';
+    else if (field === 'email' && !isValidEmail(value)) error = 'Enter a valid email address';
+    else if (field === 'password' && !isValidPassword(value)) error = 'Password must be at least 6 characters';
+    else if (field === 'phone' && !isValidWhatsAppNumber(value)) error = 'Enter a valid phone number (e.g., +91 9876543210)';
+    else if (field === 'whatsapp' && value && !isValidWhatsAppNumber(value)) error = 'Enter a valid WhatsApp number';
+    setSignupErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
   const validateSignup = (): boolean => {
     const errs: Record<string, string> = {};
     if (!signupName.trim() || signupName.trim().length < 2) errs.shopName = 'Shop name must be at least 2 characters';
@@ -200,7 +211,7 @@ export default function VendorHome() {
                     <input
                       type="text"
                       value={signupName}
-                      onChange={(e) => { setSignupName(e.target.value); setSignupErrors({}); }}
+                      onChange={(e) => { setSignupName(e.target.value); validateField('shopName', e.target.value); }}
                       className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.shopName ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="Your shop name"
                       required
@@ -215,7 +226,7 @@ export default function VendorHome() {
                     <input
                       type="email"
                       value={signupEmail}
-                      onChange={(e) => { setSignupEmail(e.target.value); setSignupErrors({}); }}
+                      onChange={(e) => { setSignupEmail(e.target.value); validateField('email', e.target.value); }}
                       className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.email ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="email@example.com"
                       required
@@ -230,7 +241,7 @@ export default function VendorHome() {
                     <input
                       type="password"
                       value={signupPassword}
-                      onChange={(e) => { setSignupPassword(e.target.value); setSignupErrors({}); }}
+                      onChange={(e) => { setSignupPassword(e.target.value); validateField('password', e.target.value); }}
                       className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.password ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="Create a password (min 6 chars)"
                       required
@@ -245,7 +256,7 @@ export default function VendorHome() {
                     <input
                       type="tel"
                       value={signupPhone}
-                      onChange={(e) => { setSignupPhone(e.target.value); setSignupErrors({}); }}
+                      onChange={(e) => { setSignupPhone(e.target.value); validateField('phone', e.target.value); }}
                       className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.phone ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="+91 9876543210"
                       required
@@ -260,7 +271,7 @@ export default function VendorHome() {
                     <input
                       type="tel"
                       value={signupWhatsapp}
-                      onChange={(e) => { setSignupWhatsapp(e.target.value); setSignupErrors({}); }}
+                      onChange={(e) => { setSignupWhatsapp(e.target.value); validateField('whatsapp', e.target.value); }}
                       className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.whatsapp ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="Same as phone if blank"
                     />

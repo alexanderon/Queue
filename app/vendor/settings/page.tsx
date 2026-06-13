@@ -74,6 +74,24 @@ export default function Settings() {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleFieldChange = (field: string, value: string) => {
+    handleChange(field, value);
+    if (field === 'whatsappNumber') {
+      if (value && !isValidWhatsAppNumber(value)) {
+        setFieldErrors((prev) => ({ ...prev, whatsapp: 'Enter a valid WhatsApp number' }));
+      } else {
+        setFieldErrors((prev) => ({ ...prev, whatsapp: '' }));
+      }
+    }
+    if (field === 'pincode') {
+      if (value && !isValidPincode(value)) {
+        setFieldErrors((prev) => ({ ...prev, pincode: 'Pincode must be 6 digits' }));
+      } else {
+        setFieldErrors((prev) => ({ ...prev, pincode: '' }));
+      }
+    }
+  };
+
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (settings.whatsappNumber && !isValidWhatsAppNumber(settings.whatsappNumber)) {
@@ -229,7 +247,7 @@ export default function Settings() {
                 <input
                   type="text"
                   value={settings.pincode}
-                  onChange={(e) => { handleChange('pincode', e.target.value); setFieldErrors({}); }}
+                  onChange={(e) => handleFieldChange('pincode', e.target.value)}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm ${fieldErrors.pincode ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Pincode"
                 />
@@ -263,7 +281,7 @@ export default function Settings() {
                 <input
                   type="tel"
                   value={settings.whatsappNumber}
-                  onChange={(e) => { handleChange('whatsappNumber', e.target.value); setFieldErrors({}); }}
+                  onChange={(e) => handleFieldChange('whatsappNumber', e.target.value)}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${fieldErrors.whatsapp ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="+91 98765 43210"
                 />

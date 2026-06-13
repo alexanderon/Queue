@@ -39,6 +39,7 @@ export default function Home() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
   const fetched = useRef(false);
   const phoneRef = useRef(customerPhone);
 
@@ -71,15 +72,24 @@ export default function Home() {
     fetchBookings();
   }, [customerPhone]);
 
+  const validatePhoneInput = (value: string) => {
+    const trimmed = value.trim();
+    if (trimmed.length > 0 && !isValidWhatsAppNumber(trimmed)) {
+      setPhoneError('Enter a valid phone number (e.g., +91 9876543210)');
+      setIsPhoneValid(false);
+    } else if (trimmed.length > 0 && isValidWhatsAppNumber(trimmed)) {
+      setPhoneError('');
+      setIsPhoneValid(true);
+    } else {
+      setPhoneError('');
+      setIsPhoneValid(false);
+    }
+  };
+
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = phoneInput.trim();
-    if (!trimmed) return;
-    if (!isValidWhatsAppNumber(trimmed)) {
-      setPhoneError('Enter a valid phone number (e.g., +91 9876543210 or 10-12 digits)');
-      return;
-    }
-    setPhoneError('');
+    if (!trimmed || !isValidWhatsAppNumber(trimmed)) return;
     sessionStorage.setItem('customerPhone', trimmed);
     setCustomerPhone(trimmed);
     phoneRef.current = trimmed;
@@ -189,14 +199,15 @@ export default function Home() {
                 <input
                   type="tel"
                   value={phoneInput}
-                  onChange={(e) => { setPhoneInput(e.target.value); setPhoneError(''); }}
+                  onChange={(e) => { setPhoneInput(e.target.value); validatePhoneInput(e.target.value); }}
                   placeholder="Enter phone number"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${phoneError ? 'border-red-500' : 'border-gray-300'}`}
                   required
                 />
                 <button
                   type="submit"
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition"
+                  disabled={!isPhoneValid}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
                 >
                   Look Up
                 </button>
