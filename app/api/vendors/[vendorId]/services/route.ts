@@ -55,6 +55,14 @@ export async function POST(
       );
     }
 
+    if (estimatedTime < 1) {
+      return NextResponse.json({ error: 'Estimated time must be at least 1 minute' }, { status: 400 });
+    }
+
+    if (price < 0) {
+      return NextResponse.json({ error: 'Price cannot be negative' }, { status: 400 });
+    }
+
     const vendor = await Vendor.findById(vendorId);
     if (!vendor) {
       return NextResponse.json({ error: 'Shop not found' }, { status: 404 });

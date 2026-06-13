@@ -88,6 +88,34 @@ export const isValidWhatsAppNumber = (phoneNumber: string): boolean => {
 };
 
 /**
+ * Validate email format
+ */
+export const isValidEmail = (email: string): boolean => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+};
+
+/**
+ * Validate password strength (min 6 chars)
+ */
+export const isValidPassword = (password: string): boolean => {
+  return password.trim().length >= 6;
+};
+
+/**
+ * Validate Indian pincode (6 digits)
+ */
+export const isValidPincode = (pincode: string): boolean => {
+  return /^\d{6}$/.test(pincode.trim());
+};
+
+/**
+ * Validate booking ID format
+ */
+export const isValidBookingId = (id: string): boolean => {
+  return /^BK[A-Z0-9]{10,20}$/i.test(id.trim());
+};
+
+/**
  * Calculate remaining time until appointment
  */
 export const getRemainingTime = (appointmentTime: Date): string => {

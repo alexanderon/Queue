@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { TextField, PrimaryButton, Stack, Text, MessageBar, MessageBarType } from '@fluentui/react';
+import { isValidBookingId } from '@/lib/utils';
 
 interface StatusFormProps {
   onSubmit: (data: any) => void;
@@ -11,11 +12,16 @@ interface StatusFormProps {
 
 export default function StatusForm({ onSubmit, loading, initialBookingId }: StatusFormProps) {
   const [bookingId, setBookingId] = useState(initialBookingId || '');
+  const [error, setError] = useState('');
 
   const handleSubmit = () => {
-    if (bookingId.trim()) {
-      onSubmit({ bookingId });
+    if (!bookingId.trim()) return;
+    if (!isValidBookingId(bookingId)) {
+      setError('Invalid booking ID format (e.g., BKXXXXXXXXXX)');
+      return;
     }
+    setError('');
+    onSubmit({ bookingId });
   };
 
   return (
@@ -32,9 +38,10 @@ export default function StatusForm({ onSubmit, loading, initialBookingId }: Stat
         label="Booking ID"
         placeholder="e.g., BK123456"
         value={bookingId}
-        onChange={(event, value) => setBookingId(value || '')}
+        onChange={(event, value) => { setBookingId(value || ''); setError(''); }}
         required
         description="Enter the booking ID you received in your confirmation WhatsApp message"
+        errorMessage={error}
       />
 
       <PrimaryButton

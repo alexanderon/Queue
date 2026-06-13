@@ -5,26 +5,40 @@ import Vendor from '@/lib/models/Vendor';
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    const { shopName, password } = await request.json();
+    const { identifier, password } = await request.json();
 
-    if (!shopName || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: 'Shop name and password are required' },
+        { error: 'Email/phone and password are required' },
         { status: 400 }
       );
     }
 
-    const vendor = await Vendor.findOne({ shopName });
+    let query;
+    if (identifier.includes('@')) {
+      query = { email: identifier.toLowerCase() };
+    } else if (/^[\d\s\+\-\(\)]+$/.test(identifier.replace(/[\s\-\(\)]/g, ''))) {
+      query = {
+        $or: [
+          { businessPhone: identifier },
+          { whatsappNumber: identifier },
+        ],
+      };
+    } else {
+      query = { shopName: identifier };
+    }
+
+    const vendor = await Vendor.findOne(query);
     if (!vendor) {
       return NextResponse.json(
-        { error: 'Invalid shop name or password' },
+        { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
     if (vendor.password !== password) {
       return NextResponse.json(
-        { error: 'Invalid shop name or password' },
+        { error: 'Invalid credentials' },
         { status: 401 }
       );
     }

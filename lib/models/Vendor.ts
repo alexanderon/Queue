@@ -46,6 +46,7 @@ const vendorSchema = new Schema<IVendor>(
     businessPhone: {
       type: String,
       required: true,
+      index: true,
     },
     whatsappNumber: {
       type: String,

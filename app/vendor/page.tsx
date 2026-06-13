@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { vendorAPI } from '@/lib/api-client';
+import { isValidEmail, isValidWhatsAppNumber, isValidPassword } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
 const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
@@ -39,7 +40,19 @@ export default function VendorHome() {
   const [signupState, setSignupState] = useState('');
   const [signupPincode, setSignupPincode] = useState('');
   const [signupLocation, setSignupLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
+  const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
   const [signupLoading, setSignupLoading] = useState(false);
+
+  const validateSignup = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!signupName.trim() || signupName.trim().length < 2) errs.shopName = 'Shop name must be at least 2 characters';
+    if (!isValidEmail(signupEmail)) errs.email = 'Enter a valid email address';
+    if (!isValidPassword(signupPassword)) errs.password = 'Password must be at least 6 characters';
+    if (!isValidWhatsAppNumber(signupPhone)) errs.phone = 'Enter a valid phone number (e.g., +91 9876543210)';
+    if (signupWhatsapp && !isValidWhatsAppNumber(signupWhatsapp)) errs.whatsapp = 'Enter a valid WhatsApp number';
+    setSignupErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const resetSignup = () => {
     setSignupName('');
@@ -74,6 +87,7 @@ export default function VendorHome() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!validateSignup()) { setSignupLoading(false); return; }
     setSignupLoading(true);
     const res = await vendorAPI.create({
       shopName: signupName,
@@ -125,14 +139,14 @@ export default function VendorHome() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Shop Name
+                      Email, Phone or Shop Name
                     </label>
                     <input
                       type="text"
                       value={vendorName}
                       onChange={(e) => setVendorName(e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
-                      placeholder="Enter your shop name"
+                      placeholder="Enter your email, phone or shop name"
                       required
                     />
                   </div>
@@ -186,11 +200,12 @@ export default function VendorHome() {
                     <input
                       type="text"
                       value={signupName}
-                      onChange={(e) => setSignupName(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      onChange={(e) => { setSignupName(e.target.value); setSignupErrors({}); }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.shopName ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="Your shop name"
                       required
                     />
+                    {signupErrors.shopName && <p className="text-red-600 text-xs mt-1">{signupErrors.shopName}</p>}
                   </div>
 
                   <div>
@@ -200,11 +215,12 @@ export default function VendorHome() {
                     <input
                       type="email"
                       value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      onChange={(e) => { setSignupEmail(e.target.value); setSignupErrors({}); }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.email ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="email@example.com"
                       required
                     />
+                    {signupErrors.email && <p className="text-red-600 text-xs mt-1">{signupErrors.email}</p>}
                   </div>
 
                   <div>
@@ -214,11 +230,12 @@ export default function VendorHome() {
                     <input
                       type="password"
                       value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
-                      placeholder="Create a password"
+                      onChange={(e) => { setSignupPassword(e.target.value); setSignupErrors({}); }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.password ? 'border-red-500' : 'border-gray-300'}`}
+                      placeholder="Create a password (min 6 chars)"
                       required
                     />
+                    {signupErrors.password && <p className="text-red-600 text-xs mt-1">{signupErrors.password}</p>}
                   </div>
 
                   <div>
@@ -228,11 +245,12 @@ export default function VendorHome() {
                     <input
                       type="tel"
                       value={signupPhone}
-                      onChange={(e) => setSignupPhone(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      onChange={(e) => { setSignupPhone(e.target.value); setSignupErrors({}); }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.phone ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="+91 9876543210"
                       required
                     />
+                    {signupErrors.phone && <p className="text-red-600 text-xs mt-1">{signupErrors.phone}</p>}
                   </div>
 
                   <div>
@@ -242,10 +260,11 @@ export default function VendorHome() {
                     <input
                       type="tel"
                       value={signupWhatsapp}
-                      onChange={(e) => setSignupWhatsapp(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      onChange={(e) => { setSignupWhatsapp(e.target.value); setSignupErrors({}); }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${signupErrors.whatsapp ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="Same as phone if blank"
                     />
+                    {signupErrors.whatsapp && <p className="text-red-600 text-xs mt-1">{signupErrors.whatsapp}</p>}
                   </div>
 
                   <div className="border-t pt-4">

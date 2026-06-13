@@ -29,6 +29,7 @@ export default function ServicesManagement() {
     estimatedTime: '',
     price: '',
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -53,8 +54,20 @@ export default function ServicesManagement() {
 
   const resetForm = () => {
     setFormData({ name: '', estimatedTime: '', price: '' });
+    setFormErrors({});
     setEditingId(null);
     setShowForm(false);
+  };
+
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!formData.name.trim() || formData.name.trim().length < 2) errs.name = 'Service name must be at least 2 characters';
+    const time = parseInt(formData.estimatedTime);
+    if (!formData.estimatedTime || isNaN(time) || time < 1) errs.estimatedTime = 'Enter a valid time (min 1 minute)';
+    const price = parseFloat(formData.price);
+    if (!formData.price || isNaN(price) || price < 0) errs.price = 'Enter a valid price';
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleEditClick = (service: Service) => {
@@ -69,7 +82,8 @@ export default function ServicesManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !vendorId) return;
+    if (!vendorId) return;
+    if (!validateForm()) return;
 
     setSaving(true);
     setError('');
@@ -164,11 +178,12 @@ export default function ServicesManagement() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setFormErrors({}); }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${formErrors.name ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="e.g., Haircut"
                   required
                 />
+                {formErrors.name && <p className="text-red-600 text-xs mt-1">{formErrors.name}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -182,9 +197,11 @@ export default function ServicesManagement() {
                     onChange={(e) =>
                       setFormData({ ...formData, estimatedTime: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${formErrors.estimatedTime ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="30"
+                    min="1"
                   />
+                  {formErrors.estimatedTime && <p className="text-red-600 text-xs mt-1">{formErrors.estimatedTime}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -193,10 +210,12 @@ export default function ServicesManagement() {
                   <input
                     type="number"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    onChange={(e) => { setFormData({ ...formData, price: e.target.value }); setFormErrors({}); }}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${formErrors.price ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="500"
+                    min="0"
                   />
+                  {formErrors.price && <p className="text-red-600 text-xs mt-1">{formErrors.price}</p>}
                 </div>
               </div>
 

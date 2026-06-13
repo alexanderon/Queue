@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Vendor from '@/lib/models/Vendor';
+import { isValidWhatsAppNumber } from '@/lib/utils';
 
 export async function GET(
   request: NextRequest,
@@ -65,7 +66,16 @@ export async function PUT(
       return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
     }
 
-    if (whatsappNumber !== undefined) vendor.whatsappNumber = whatsappNumber;
+    if (whatsappNumber !== undefined) {
+      if (!isValidWhatsAppNumber(whatsappNumber)) {
+        return NextResponse.json({ error: 'Invalid WhatsApp number format' }, { status: 400 });
+      }
+      vendor.whatsappNumber = whatsappNumber;
+    }
+
+    if (businessStartTime && businessEndTime && businessStartTime >= businessEndTime) {
+      return NextResponse.json({ error: 'Closing time must be after opening time' }, { status: 400 });
+    }
     if (notifyBeforeMinutes !== undefined) vendor.notifyBeforeMinutes = parseInt(notifyBeforeMinutes);
     if (enablePredictions !== undefined) vendor.enablePredictions = enablePredictions;
     if (businessStartTime !== undefined) vendor.businessStartTime = businessStartTime;

@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// This would be replaced with actual database logic
-
 import connectDB from '@/lib/db';
 import Booking from '@/lib/models/Booking';
 import Customer from '@/lib/models/Customer';
 import Vendor from '@/lib/models/Vendor';
-import { generateBookingId } from '@/lib/utils';
+import { generateBookingId, isValidWhatsAppNumber } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +18,14 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    if (!isValidWhatsAppNumber(customerPhone)) {
+      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+    }
+
+    if (customerName.trim().length < 2) {
+      return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 });
     }
 
     const vendor = await Vendor.findById(shopId);

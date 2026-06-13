@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Vendor from '@/lib/models/Vendor';
 import { seedVendorsIfEmpty } from '@/lib/seed';
+import { isValidEmail, isValidWhatsAppNumber, isValidPassword } from '@/lib/utils';
 
 export async function GET() {
   try {
@@ -42,6 +43,22 @@ export async function POST(request: NextRequest) {
         { error: 'Shop name, email, password, and phone are required' },
         { status: 400 }
       );
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    if (!isValidPassword(password)) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    }
+
+    if (!isValidWhatsAppNumber(businessPhone)) {
+      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+    }
+
+    if (whatsappNumber && !isValidWhatsAppNumber(whatsappNumber)) {
+      return NextResponse.json({ error: 'Invalid WhatsApp number format' }, { status: 400 });
     }
 
     const existing = await Vendor.findOne({

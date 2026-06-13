@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { bookingAPI } from '@/lib/api-client';
+import { isValidWhatsAppNumber } from '@/lib/utils';
 
 interface BookingDisplay {
   bookingId: string;
@@ -30,6 +31,7 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [customerPhone, setCustomerPhone] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const fetched = useRef(false);
   const phoneRef = useRef(customerPhone);
 
@@ -73,6 +75,11 @@ export default function BookingsPage() {
     e.preventDefault();
     const trimmed = phoneInput.trim();
     if (!trimmed) return;
+    if (!isValidWhatsAppNumber(trimmed)) {
+      setPhoneError('Enter a valid phone number (e.g., +91 9876543210 or 10-12 digits)');
+      return;
+    }
+    setPhoneError('');
     sessionStorage.setItem('customerPhone', trimmed);
     setCustomerPhone(trimmed);
     phoneRef.current = trimmed;
@@ -137,7 +144,7 @@ export default function BookingsPage() {
                 <input
                   type="tel"
                   value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
+                  onChange={(e) => { setPhoneInput(e.target.value); setPhoneError(''); }}
                   placeholder="Enter phone number"
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
@@ -149,6 +156,9 @@ export default function BookingsPage() {
                   Look Up
                 </button>
               </form>
+              {phoneError && (
+                <p className="text-red-600 text-xs mt-2">{phoneError}</p>
+              )}
             </div>
           </div>
         )}

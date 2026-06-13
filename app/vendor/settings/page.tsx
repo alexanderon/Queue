@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { vendorAPI } from '@/lib/api-client';
+import { isValidWhatsAppNumber, isValidPincode } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
 const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
@@ -30,6 +31,7 @@ export default function Settings() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -72,8 +74,24 @@ export default function Settings() {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (settings.whatsappNumber && !isValidWhatsAppNumber(settings.whatsappNumber)) {
+      errs.whatsapp = 'Enter a valid WhatsApp number';
+    }
+    if (settings.pincode && !isValidPincode(settings.pincode)) {
+      errs.pincode = 'Pincode must be 6 digits';
+    }
+    if (settings.businessStartTime >= settings.businessEndTime) {
+      errs.businessEndTime = 'Closing time must be after opening time';
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSave = async () => {
     if (!vendorId) return;
+    if (!validate()) return;
     setSaving(true);
     setError('');
     setSuccess('');
@@ -170,8 +188,9 @@ export default function Settings() {
                       type="time"
                       value={settings.businessEndTime}
                       onChange={(e) => handleChange('businessEndTime', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${fieldErrors.businessEndTime ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {fieldErrors.businessEndTime && <p className="text-red-600 text-xs mt-1">{fieldErrors.businessEndTime}</p>}
                   </div>
                 </div>
               </div>
@@ -210,10 +229,11 @@ export default function Settings() {
                 <input
                   type="text"
                   value={settings.pincode}
-                  onChange={(e) => handleChange('pincode', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                  onChange={(e) => { handleChange('pincode', e.target.value); setFieldErrors({}); }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm ${fieldErrors.pincode ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Pincode"
                 />
+                {fieldErrors.pincode && <p className="text-red-600 text-xs mt-1">{fieldErrors.pincode}</p>}
                 <details className="text-sm">
                   <summary className="text-indigo-600 cursor-pointer hover:text-indigo-700 font-medium">
                     Pick location on map
@@ -240,13 +260,14 @@ export default function Settings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     WhatsApp Business Number
                   </label>
-                  <input
-                    type="tel"
-                    value={settings.whatsappNumber}
-                    onChange={(e) => handleChange('whatsappNumber', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
-                    placeholder="+91 98765 43210"
-                  />
+                <input
+                  type="tel"
+                  value={settings.whatsappNumber}
+                  onChange={(e) => { handleChange('whatsappNumber', e.target.value); setFieldErrors({}); }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent ${fieldErrors.whatsapp ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="+91 98765 43210"
+                />
+                {fieldErrors.whatsapp && <p className="text-red-600 text-xs mt-1">{fieldErrors.whatsapp}</p>}
                 </div>
 
                 <div>

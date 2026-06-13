@@ -128,10 +128,10 @@ export const vendorAPI = {
     });
   },
 
-  login: async (shopName: string, password: string) => {
+  login: async (identifier: string, password: string) => {
     return apiCall('/api/vendors/login', {
       method: 'POST',
-      body: JSON.stringify({ shopName, password }),
+      body: JSON.stringify({ identifier, password }),
     });
   },
 
