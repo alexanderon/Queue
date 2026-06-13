@@ -45,6 +45,11 @@ export interface Vendor {
   businessEndTime: string;
   notifyBeforeMinutes: number;
   enablePredictions: boolean;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  location: { lat: number; lng: number };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -118,6 +123,11 @@ export interface VendorSettings {
   enablePredictions: boolean;
   businessStartTime: string;
   businessEndTime: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  location: { lat: number; lng: number };
 }
 
 export interface AnalyticsData {

@@ -14,6 +14,10 @@ export interface IVendor extends Document {
   city: string;
   state: string;
   pincode: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
   services: mongoose.Types.ObjectId[];
   currentQueue: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -78,6 +82,13 @@ const vendorSchema = new Schema<IVendor>(
     pincode: {
       type: String,
       default: '',
+    },
+    location: {
+      type: {
+        lat: { type: Number, default: 0 },
+        lng: { type: Number, default: 0 },
+      },
+      default: { lat: 0, lng: 0 },
     },
     services: [
       {

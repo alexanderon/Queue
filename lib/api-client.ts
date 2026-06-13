@@ -116,6 +116,11 @@ export const vendorAPI = {
     password: string;
     businessPhone: string;
     whatsappNumber?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    location?: { lat: number; lng: number };
   }) => {
     return apiCall('/api/vendors', {
       method: 'POST',

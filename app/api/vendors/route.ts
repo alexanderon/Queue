@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
-    const { shopName, email, password, businessPhone, whatsappNumber } = body;
+    const { shopName, email, password, businessPhone, whatsappNumber, address, city, state, pincode, location } = body;
 
     if (!shopName || !email || !password || !businessPhone) {
       return NextResponse.json(
@@ -62,6 +62,11 @@ export async function POST(request: NextRequest) {
       whatsappNumber: whatsappNumber || businessPhone,
       businessStartTime: '09:00',
       businessEndTime: '19:00',
+      address: address || '',
+      city: city || '',
+      state: state || '',
+      pincode: pincode || '',
+      location: location || { lat: 0, lng: 0 },
     });
 
     await vendor.save();

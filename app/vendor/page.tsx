@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { vendorAPI } from '@/lib/api-client';
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center text-sm text-gray-500">Loading map...</div>,
+});
 
 export default function VendorHome() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -27,6 +33,11 @@ export default function VendorHome() {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupWhatsapp, setSignupWhatsapp] = useState('');
+  const [signupAddress, setSignupAddress] = useState('');
+  const [signupCity, setSignupCity] = useState('');
+  const [signupState, setSignupState] = useState('');
+  const [signupPincode, setSignupPincode] = useState('');
+  const [signupLocation, setSignupLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
   const [signupLoading, setSignupLoading] = useState(false);
 
   const resetSignup = () => {
@@ -35,6 +46,11 @@ export default function VendorHome() {
     setSignupPassword('');
     setSignupPhone('');
     setSignupWhatsapp('');
+    setSignupAddress('');
+    setSignupCity('');
+    setSignupState('');
+    setSignupPincode('');
+    setSignupLocation({ lat: 0, lng: 0 });
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -64,6 +80,11 @@ export default function VendorHome() {
       password: signupPassword,
       businessPhone: signupPhone,
       whatsappNumber: signupWhatsapp || undefined,
+      address: signupAddress || undefined,
+      city: signupCity || undefined,
+      state: signupState || undefined,
+      pincode: signupPincode || undefined,
+      location: signupLocation.lat ? signupLocation : undefined,
     });
     if (res.success && res.data) {
       const d = res.data as any;
@@ -224,6 +245,55 @@ export default function VendorHome() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                       placeholder="Same as phone if blank"
                     />
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Address (optional)</h3>
+                    <div className="space-y-3 mb-3">
+                      <input
+                        type="text"
+                        value={signupAddress}
+                        onChange={(e) => setSignupAddress(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                        placeholder="Street address"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={signupCity}
+                          onChange={(e) => setSignupCity(e.target.value)}
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                          placeholder="City"
+                        />
+                        <input
+                          type="text"
+                          value={signupState}
+                          onChange={(e) => setSignupState(e.target.value)}
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                          placeholder="State"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={signupPincode}
+                        onChange={(e) => setSignupPincode(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm"
+                        placeholder="Pincode"
+                      />
+                    </div>
+                    <details className="text-sm">
+                      <summary className="text-indigo-600 cursor-pointer hover:text-indigo-700 font-medium">
+                        Pick location on map
+                      </summary>
+                      <div className="mt-3">
+                        <LocationPicker
+                          onAddressChange={(addr) => setSignupAddress(addr)}
+                          onLocationChange={(loc) => setSignupLocation(loc)}
+                          initialAddress={signupAddress}
+                          initialLocation={signupLocation.lat ? signupLocation : undefined}
+                        />
+                      </div>
+                    </details>
                   </div>
 
                   <button
