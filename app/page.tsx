@@ -236,13 +236,13 @@ export default function Home() {
 
         {/* Features Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-3xl mb-3">📅</div>
-            <h3 className="font-bold text-lg mb-2">Book Your Slot</h3>
+          <Link href="/chat-booking" className="block bg-white rounded-lg shadow p-6 hover:shadow-md transition">
+            <div className="text-3xl mb-3">💬</div>
+            <h3 className="font-bold text-lg mb-2">Chat Booking</h3>
             <p className="text-gray-600 text-sm">
-              Browse available time slots and book your appointment instantly.
+              Book your appointment through a conversational chat interface — quick & easy!
             </p>
-          </div>
+          </Link>
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-3xl mb-3">⏱️</div>
@@ -272,8 +272,14 @@ export default function Home() {
         {/* CTA Buttons */}
         <section className="flex flex-col gap-3 max-w-md mx-auto">
           <Link
-            href="/book-slot"
+            href="/chat-booking"
             className="bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold text-center hover:bg-indigo-700 transition"
+          >
+            Chat Booking 💬
+          </Link>
+          <Link
+            href="/book-slot"
+            className="bg-white text-indigo-600 py-3 px-6 rounded-lg font-semibold text-center border-2 border-indigo-600 hover:bg-indigo-50 transition"
           >
             Book an Appointment
           </Link>

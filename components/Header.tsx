@@ -14,6 +14,9 @@ export default function Header() {
           <Link href="/" className="text-sm" style={{ color: '#424242', textDecoration: 'none' }}>
             Home
           </Link>
+          <Link href="/chat-booking" className="text-sm" style={{ color: '#424242', textDecoration: 'none' }}>
+            Chat Booking
+          </Link>
           <Link href="/book-slot" className="text-sm" style={{ color: '#424242', textDecoration: 'none' }}>
             Book Slot
           </Link>
